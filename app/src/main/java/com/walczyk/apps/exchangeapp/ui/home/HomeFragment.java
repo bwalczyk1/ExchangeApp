@@ -1,7 +1,6 @@
 package com.walczyk.apps.exchangeapp.ui.home;
 
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -17,7 +16,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.walczyk.apps.exchangeapp.CurrencyAdapter;
 import com.walczyk.apps.exchangeapp.R;
@@ -28,7 +26,6 @@ import java.util.ArrayList;
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
-    private Spinner currencySpinner;
     CurrencyAdapter adapter;
     ArrayList<String> currencies, selectedCurrencies;
     String base;
@@ -36,8 +33,6 @@ public class HomeFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        HomeViewModel homeViewModel =
-                new ViewModelProvider(this).get(HomeViewModel.class);
 
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
@@ -59,14 +54,14 @@ public class HomeFragment extends Fragment {
         currencies.add("SEK");
         currencies.add("PLN");
 
-        currencySpinner = binding.spinner;
-        currencySpinner.setAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_dropdown_item_1line, getCurrenciesWithFlags(currencies)));
+        Spinner currencySpinner = binding.spinner;
+        currencySpinner.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_dropdown_item_1line, getCurrenciesWithFlags(currencies)));
         currencySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 base = currencies.get(position);
                 adapter = new CurrencyAdapter(
-                        getActivity(),
+                        requireActivity(),
                         R.layout.layout_currency,
                         selectedCurrencies,
                         base,
@@ -84,7 +79,7 @@ public class HomeFragment extends Fragment {
         selectedCurrencies = new ArrayList<>();
 
         adapter = new CurrencyAdapter(
-                getActivity(),
+                requireActivity(),
                 R.layout.layout_currency,
                 selectedCurrencies,
                 base,
@@ -106,7 +101,7 @@ public class HomeFragment extends Fragment {
                     return;
                 value = Double.valueOf(s.toString());
                 adapter = new CurrencyAdapter(
-                        getActivity(),
+                        requireActivity(),
                         R.layout.layout_currency,
                         selectedCurrencies,
                         base,
@@ -123,33 +118,27 @@ public class HomeFragment extends Fragment {
         });
 
         Button addBtn = binding.addBtn;
-        addBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AlertDialog.Builder b = new AlertDialog.Builder(getActivity());
-                b.setTitle("Add currency");
-                b.setItems(getCurrenciesWithFlags(currencies).toArray(new CharSequence[currencies.size()]), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                        if(selectedCurrencies.contains(currencies.get(which))){
-                            Toast.makeText(getActivity(), "Currency already selected", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                        selectedCurrencies.add(currencies.get(which));
-                        adapter = new CurrencyAdapter(
-                                getActivity(),
-                                R.layout.layout_currency,
-                                selectedCurrencies,
-                                base,
-                                value
-                        );
+        addBtn.setOnClickListener(v -> {
+            AlertDialog.Builder b = new AlertDialog.Builder(getActivity());
+            b.setTitle("Add currency");
+            b.setItems(getCurrenciesWithFlags(currencies).toArray(new CharSequence[currencies.size()]), (dialog, which) -> {
+                dialog.dismiss();
+                if(selectedCurrencies.contains(currencies.get(which))){
+                    Toast.makeText(getActivity(), "Currency already selected", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                selectedCurrencies.add(currencies.get(which));
+                adapter = new CurrencyAdapter(
+                        requireActivity(),
+                        R.layout.layout_currency,
+                        selectedCurrencies,
+                        base,
+                        value
+                );
 
-                        binding.currencyList.setAdapter(adapter);
-                    }
-                });
-                b.show();
-            }
+                binding.currencyList.setAdapter(adapter);
+            });
+            b.show();
         });
 
         return root;
@@ -165,7 +154,7 @@ public class HomeFragment extends Fragment {
     public void onResume() {
         super.onResume();
         adapter = new CurrencyAdapter(
-                getActivity(),
+                requireActivity(),
                 R.layout.layout_currency,
                 selectedCurrencies,
                 base,
@@ -178,9 +167,6 @@ public class HomeFragment extends Fragment {
     public String countryCodeToEmoji(String code) {
         code = code.substring(0, 2);
         int OFFSET = 127397;
-        if(code == null || code.length() != 2) {
-            return "";
-        }
 
         code = code.toUpperCase();
 

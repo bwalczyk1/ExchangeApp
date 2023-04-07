@@ -1,26 +1,22 @@
 package com.walczyk.apps.exchangeapp.ui.charts;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.os.Looper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.anychart.AnyChart;
@@ -40,6 +36,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 public class ChartsFragment extends Fragment {
 
@@ -50,15 +47,13 @@ public class ChartsFragment extends Fragment {
     private SimpleDateFormat formatter;
     private String base,currency, duration;
     private ArrayList<String> currencies;
-    private Spinner baseSpinner, currencySpinner;
     private Cartesian cartesian;
     private BaseWithMarkers series;
     boolean isChartColumn;
 
+    @SuppressLint("SimpleDateFormat")
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        ChartsViewModel chartsViewModel =
-                new ViewModelProvider(this).get(ChartsViewModel.class);
 
         binding = FragmentChartsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
@@ -68,7 +63,7 @@ public class ChartsFragment extends Fragment {
         duration = "1W";
         isChartColumn = false;
 
-        requestQueue = Volley.newRequestQueue(getActivity());
+        requestQueue = Volley.newRequestQueue(requireActivity());
         calendar = Calendar.getInstance();
         calendar.add(Calendar.DATE, -7);
         formatter = new SimpleDateFormat("yyyy-MM-dd");
@@ -87,12 +82,12 @@ public class ChartsFragment extends Fragment {
         currencies.add("SEK");
         currencies.add("PLN");
 
-        baseSpinner = binding.baseSpinner;
-        baseSpinner.setAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_dropdown_item_1line, getCurrenciesWithFlags(currencies)));
+        Spinner baseSpinner = binding.baseSpinner;
+        baseSpinner.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_dropdown_item_1line, getCurrenciesWithFlags(currencies)));
         baseSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if(base != currencies.get(position)){
+                if(!Objects.equals(base, currencies.get(position))){
                     base = currencies.get(position);
                     getHistoricalData(() -> updateChart());
                 }
@@ -104,12 +99,12 @@ public class ChartsFragment extends Fragment {
             }
         });
 
-        currencySpinner = binding.currencySpinner;
-        currencySpinner.setAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_dropdown_item_1line, getCurrenciesWithFlags(currencies)));
+        Spinner currencySpinner = binding.currencySpinner;
+        currencySpinner.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_dropdown_item_1line, getCurrenciesWithFlags(currencies)));
         currencySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if(currency != currencies.get(position)){
+                if(!Objects.equals(currency, currencies.get(position))){
                     currency = currencies.get(position);
                     getHistoricalData(() -> updateChart());
                 }
@@ -121,95 +116,69 @@ public class ChartsFragment extends Fragment {
             }
         });
 
-        binding.btn1w.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Button btn = (Button) v;
-                if(duration != btn.getText().toString()){
-                    duration = btn.getText().toString();
-                    calendar = Calendar.getInstance();
-                    calendar.add(Calendar.DATE, -7);
-                    getHistoricalData(() -> updateChart());
-                }
+        binding.btn1w.setOnClickListener(v -> {
+            Button btn = (Button) v;
+            if(!Objects.equals(duration, btn.getText().toString())){
+                duration = btn.getText().toString();
+                calendar = Calendar.getInstance();
+                calendar.add(Calendar.DATE, -7);
+                getHistoricalData(this::updateChart);
             }
         });
-        binding.btn2w.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Button btn = (Button) v;
-                if(duration != btn.getText().toString()){
-                    duration = btn.getText().toString();
-                    calendar = Calendar.getInstance();
-                    calendar.add(Calendar.DATE, -14);
-                    getHistoricalData(() -> updateChart());
-                }
+        binding.btn2w.setOnClickListener(v -> {
+            Button btn = (Button) v;
+            if(!Objects.equals(duration, btn.getText().toString())){
+                duration = btn.getText().toString();
+                calendar = Calendar.getInstance();
+                calendar.add(Calendar.DATE, -14);
+                getHistoricalData(this::updateChart);
             }
         });
-        binding.btn1m.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Button btn = (Button) v;
-                if(duration != btn.getText().toString()){
-                    duration = btn.getText().toString();
-                    calendar = Calendar.getInstance();
-                    calendar.add(Calendar.DATE, -30);
-                    getHistoricalData(() -> updateChart());
-                }
+        binding.btn1m.setOnClickListener(v -> {
+            Button btn = (Button) v;
+            if(!Objects.equals(duration, btn.getText().toString())){
+                duration = btn.getText().toString();
+                calendar = Calendar.getInstance();
+                calendar.add(Calendar.DATE, -30);
+                getHistoricalData(this::updateChart);
             }
         });
-        binding.btn3m.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Button btn = (Button) v;
-                if(duration != btn.getText().toString()){
-                    duration = btn.getText().toString();
-                    calendar = Calendar.getInstance();
-                    calendar.add(Calendar.DATE, -92);
-                    getHistoricalData(() -> updateChart());
-                }
+        binding.btn3m.setOnClickListener(v -> {
+            Button btn = (Button) v;
+            if(!Objects.equals(duration, btn.getText().toString())){
+                duration = btn.getText().toString();
+                calendar = Calendar.getInstance();
+                calendar.add(Calendar.DATE, -92);
+                getHistoricalData(this::updateChart);
             }
         });
-        binding.btn6m.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Button btn = (Button) v;
-                if(duration != btn.getText().toString()){
-                    duration = btn.getText().toString();
-                    calendar = Calendar.getInstance();
-                    calendar.add(Calendar.DATE, -183);
-                    getHistoricalData(() -> updateChart());
-                }
+        binding.btn6m.setOnClickListener(v -> {
+            Button btn = (Button) v;
+            if(!Objects.equals(duration, btn.getText().toString())){
+                duration = btn.getText().toString();
+                calendar = Calendar.getInstance();
+                calendar.add(Calendar.DATE, -183);
+                getHistoricalData(this::updateChart);
             }
         });
-        binding.btn1y.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Button btn = (Button) v;
-                if(duration != btn.getText().toString()){
-                    duration = btn.getText().toString();
-                    calendar = Calendar.getInstance();
-                    calendar.add(Calendar.DATE, -365);
-                    getHistoricalData(() -> updateChart());
-                }
+        binding.btn1y.setOnClickListener(v -> {
+            Button btn = (Button) v;
+            if(!Objects.equals(duration, btn.getText().toString())){
+                duration = btn.getText().toString();
+                calendar = Calendar.getInstance();
+                calendar.add(Calendar.DATE, -365);
+                getHistoricalData(this::updateChart);
             }
         });
 
-        binding.chartTypeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                isChartColumn = isChecked;
-                updateChart();
-            }
+        binding.chartTypeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            isChartColumn = isChecked;
+            updateChart();
         });
 
         getHistoricalData(() -> new android.os.Handler(Looper.getMainLooper()).postDelayed(
-                new Runnable() {
-                    public void run() {
-                        generateChart();
-                    }
-                },
+                this::generateChart,
                 1000));
-
         return root;
     }
 
@@ -231,22 +200,14 @@ public class ChartsFragment extends Fragment {
                 "https://api.exchangerate.host/timeseries?start_date=" + startDate +
                         "&end_date=" + formatter.format(new Date()) +
                         "&symbols=" + currency +
-                        "&base=" + base, null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                try {
-                    historicalData = response.getJSONObject("rates");
-                    callBack.onSuccess();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Toast.makeText(getActivity(), "Something went wrong ;(", Toast.LENGTH_SHORT).show();
-            }
-        });
+                        "&base=" + base, null, response -> {
+                            try {
+                                historicalData = response.getJSONObject("rates");
+                                callBack.onSuccess();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }, error -> Toast.makeText(getActivity(), "Something went wrong ;(", Toast.LENGTH_SHORT).show());
 
         requestQueue.add(historicalDataRequest);
     }
@@ -282,9 +243,6 @@ public class ChartsFragment extends Fragment {
 
         series = cartesian.line(seriesData);
         series.name(currency);
-//        series.hovered().markers().enabled(false);
-//        series.hovered().markers().type(MarkerType.CIRCLE).size(4d);
-//        series.tooltip().position("right").anchor(Anchor.LEFT_CENTER).offsetX(5d).offsetY(5d);
         series.tooltip().enabled(false);
 
         cartesian.legend().enabled(false);
@@ -323,9 +281,6 @@ public class ChartsFragment extends Fragment {
     public String countryCodeToEmoji(String code) {
         code = code.substring(0, 2);
         int OFFSET = 127397;
-        if(code == null || code.length() != 2) {
-            return "";
-        }
 
         code = code.toUpperCase();
 

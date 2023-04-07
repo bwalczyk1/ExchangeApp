@@ -1,5 +1,6 @@
 package com.walczyk.apps.exchangeapp;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,8 +15,6 @@ import androidx.annotation.Nullable;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.squareup.picasso.Picasso;
@@ -27,9 +26,9 @@ import java.util.Currency;
 import java.util.List;
 
 public class CurrencyAdapter extends ArrayAdapter {
-    private ArrayList<String> _list;
-    private Context _context;
-    private int _resource;
+    private final ArrayList<String> _list;
+    private final Context _context;
+    private final int _resource;
     JSONObject currencyNames, rates;
     RequestQueue requestQueue;
     String _base;
@@ -44,45 +43,30 @@ public class CurrencyAdapter extends ArrayAdapter {
         this._value = value;
 
         requestQueue = Volley.newRequestQueue(_context);
-        JsonObjectRequest symbolsRequest = new JsonObjectRequest(Request.Method.GET, "https://api.exchangerate.host/symbols", null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                try {
-                    currencyNames = response.getJSONObject("symbols");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        JsonObjectRequest symbolsRequest = new JsonObjectRequest(Request.Method.GET, "https://api.exchangerate.host/symbols", null, response -> {
+            try {
+                currencyNames = response.getJSONObject("symbols");
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Toast.makeText(_context, "Something went wrong ;(", Toast.LENGTH_SHORT).show();
-            }
-        });
+        }, error -> Toast.makeText(_context, "Something went wrong ;(", Toast.LENGTH_SHORT).show());
 
         requestQueue.add(symbolsRequest);
 
-        JsonObjectRequest ratesRequest = new JsonObjectRequest(Request.Method.GET, "https://api.exchangerate.host/latest?base="+_base, null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                try {
-                    rates = response.getJSONObject("rates");
-                    notifyDataSetChanged();
-                } catch (Exception e) {
+        JsonObjectRequest ratesRequest = new JsonObjectRequest(Request.Method.GET, "https://api.exchangerate.host/latest?base="+_base, null, response -> {
+            try {
+                rates = response.getJSONObject("rates");
+                notifyDataSetChanged();
+            } catch (Exception ignored) {
 
-                }
             }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Toast.makeText(_context, "Something went wrong ;(", Toast.LENGTH_SHORT).show();
-            }
-        });
+        }, error -> Toast.makeText(_context, "Something went wrong ;(", Toast.LENGTH_SHORT).show());
 
         requestQueue.add(ratesRequest);
         requestQueue.start();
     }
 
+    @SuppressLint({"ViewHolder", "SetTextI18n", "DefaultLocale"})
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
@@ -100,15 +84,15 @@ public class CurrencyAdapter extends ArrayAdapter {
             currencyNameV.setText(currencyName);
             // rate
             TextView convertedValue = (TextView) finalConvertView.findViewById(R.id.converted_value);
-            Double rate = rates.getDouble(_list.get(position));
+            double rate = rates.getDouble(_list.get(position));
             convertedValue.setText(Currency.getInstance(_list.get(position)).getSymbol() + String.format("%.4f",rate * _value));
             TextView reverseConvertedValue = (TextView) finalConvertView.findViewById(R.id.reverse_converted_value);
             reverseConvertedValue.setText("1 " + _list.get(position) + " = " + String.format("%.4f",1/rate) + " " + _base);
             //image
             ImageView image = (ImageView) finalConvertView.findViewById(R.id.flag_image);
-            String imageUrl = "https://countryflagsapi.com/png/" + _list.get(position).substring(0, _list.get(position).length()-1);
+            String imageUrl = "https://flagcdn.com/64x48/" + _list.get(position).substring(0, _list.get(position).length()-1).toLowerCase() + ".png";
             Picasso.get().load(imageUrl).into(image);
-        }catch (Exception e){}
+        }catch (Exception ignored){}
 
         return finalConvertView;
     }
